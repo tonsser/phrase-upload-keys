@@ -44,7 +44,7 @@ fn try_main() -> Result<(), Error> {
     let token = match matches.value_of("TOKEN") {
         Some(token) => Some(token.to_string()),
         None => std::env::var("PHRASE_ACCESS_TOKEN").ok(),
-    }.map(|s| Token(s))
+    }.map(Token)
     .ok_or_else(|| CmdArgMissing {
         arg: "access-token".into(),
     })?;
@@ -239,9 +239,8 @@ fn upload_translations(
     pb: &mut Progress,
     keys: Vec<(Key, String)>,
 ) -> Result<(), Error> {
-    let mut acc = vec![];
     for pair in keys {
-        acc.push(upload_translation(client, token, project, locale, pair)?);
+        upload_translation(client, token, project, locale, pair)?;
         pb.inc();
     }
     Ok(())
@@ -266,7 +265,6 @@ fn upload_translation(
         &format!("/api/v2/projects/{}/translations", project.id),
         token,
     ).map(|_| ())
-    .map_err(|err| err.into())
 }
 
 fn find_project(client: &Client, token: &Token, name: &str) -> Result<Project, Error> {
@@ -307,8 +305,8 @@ fn phrase_req(
     let url = format!("https://api.phraseapp.com{}", path);
 
     let req = match &method {
-        &Method::Get => client.get(&url),
-        &Method::Post(ref params) => client.post(&url).form(&params),
+        Method::Get => client.get(&url),
+        Method::Post(ref params) => client.post(&url).form(&params),
     }.header(reqwest::header::AUTHORIZATION, format!("token {}", token.0));
 
     let resp = req.send()?;
