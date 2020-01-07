@@ -24,7 +24,7 @@ String 2
 Those key/string pairs can be uploaded with
 
 ```
-phrase-upload-keys strings.txt --project-name "PROJECT_NAME" --token PHRASE_ACCESS_TOKEN
+phrase-upload-keys strings.txt --project-name "PROJECT_NAME" --access-token PHRASE_ACCESS_TOKEN
 ```
 
 If you don't set `--token` it will look for an environment variable called `PHRASE_ACCESS_TOKEN`.
