@@ -44,21 +44,20 @@ fn try_main() -> Result<(), Error> {
     let token = match matches.value_of("TOKEN") {
         Some(token) => Some(token.to_string()),
         None => std::env::var("PHRASE_ACCESS_TOKEN").ok(),
-    }.map(Token)
+    }
+    .map(Token)
     .ok_or_else(|| CmdArgMissing {
         arg: "access-token".into(),
     })?;
 
-    let locale = match matches.value_of("LOCALE") {
-        Some(locale) => locale,
-        None => "en",
-    };
+    let locale = matches.value_of("LOCALE").unwrap_or("en");
 
     let project_name: String = matches
         .value_of("PROJECT_NAME")
         .ok_or_else(|| CmdArgMissing {
             arg: "PROJECT_NAME".into(),
-        })?.to_string();
+        })?
+        .to_string();
 
     let keys = parse_keys(&path)?;
 
@@ -137,7 +136,8 @@ fn parse_keys(path: &str) -> Result<Vec<NewKey>, Error> {
         .map(|(key, string)| NewKey {
             key: key.to_string(),
             string: string.to_string(),
-        }).collect();
+        })
+        .collect();
 
     Ok(new_keys)
 }
@@ -219,14 +219,15 @@ fn create_key(
     key: NewKey,
 ) -> Result<(Key, String), Error> {
     let params = vec![("name".into(), key.key)];
-    let translation = key.string.clone();
+    let translation = key.string;
 
     phrase_req(
         client,
         Method::Post(params),
         &format!("/api/v2/projects/{}/keys", project.id),
         token,
-    )?.json()
+    )?
+    .json()
     .map_err(Error::from)
     .map(|created_key| (created_key, translation))
 }
@@ -264,7 +265,8 @@ fn upload_translation(
         Method::Post(params),
         &format!("/api/v2/projects/{}/translations", project.id),
         token,
-    ).map(|_| ())
+    )
+    .map(|_| ())
 }
 
 fn find_project(client: &Client, token: &Token, name: &str) -> Result<Project, Error> {
@@ -288,7 +290,8 @@ fn find_locale(
         Method::Get,
         &format!("/api/v2/projects/{}/locales", project.id),
         token,
-    )?.json()?;
+    )?
+    .json()?;
 
     projects
         .into_iter()
@@ -307,7 +310,8 @@ fn phrase_req(
     let req = match &method {
         Method::Get => client.get(&url),
         Method::Post(ref params) => client.post(&url).form(&params),
-    }.header(reqwest::header::AUTHORIZATION, format!("token {}", token.0));
+    }
+    .header(reqwest::header::AUTHORIZATION, format!("token {}", token.0));
 
     let resp = req.send()?;
     let status = resp.status();
@@ -319,7 +323,8 @@ fn phrase_req(
             path: path.to_string(),
             method,
             status,
-        }.into())
+        }
+        .into())
     }
 }
 
@@ -343,9 +348,7 @@ impl fmt::Display for Method {
 #[derive(Fail, Debug)]
 #[fail(
     display = "Request to \"{} {}\" failed with status \"{}\"",
-    method,
-    path,
-    status
+    method, path, status
 )]
 pub struct RequestFailed {
     path: String,
